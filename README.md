@@ -1,0 +1,1 @@
+Bucak Devlet hastenesi için yapılan java sıramatik uygulaması. Proje Rasperry pi üzerinde çalışmaktadır. Seri haberleşme portundan gelen bilgiye göre sıra dağıtmaktadır.
