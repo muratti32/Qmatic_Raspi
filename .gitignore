@@ -1,1 +1,6 @@
-/dist/
+**/dist
+**/build
+*.psd
+*.png
+*.zip
+*.jar
