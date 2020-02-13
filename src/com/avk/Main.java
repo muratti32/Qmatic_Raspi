@@ -14,24 +14,28 @@ import com.pi4j.io.serial.SerialConfig;
 import com.pi4j.io.serial.SerialDataEvent;
 import com.pi4j.io.serial.SerialDataEventListener;
 import com.pi4j.io.serial.SerialFactory;
-import com.pi4j.io.serial.SerialPort;
 import com.pi4j.io.serial.StopBits;
 import com.pi4j.util.Console;
+import java.awt.AWTKeyStroke;
 import java.awt.Color;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
-import java.awt.Toolkit;
-import java.io.IOException;
+import java.awt.event.KeyEvent;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import javax.swing.DefaultListModel;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.Line;
+import javax.sound.sampled.LineEvent;
 import javax.swing.JFrame;
-import javax.swing.Timer;
 
 /**
  *
@@ -45,15 +49,17 @@ public class Main extends javax.swing.JFrame {
         .getLocalGraphicsEnvironment().getScreenDevices()[0];
     
     
+    
     //Seri iletişim değişkenleri
     final Console console = new Console();
     final Serial serial = SerialFactory.createInstance();
     
     //Ekrana yazma işini sıraya koyma işini üstlenen thread düzenleyici
-    ExecutorService service = Executors.newFixedThreadPool(3);
+    ExecutorService service = Executors.newFixedThreadPool(5);
     
     //Gelen sıra numaralarını barındıran liste
     List<String> siraListesi = new ArrayList<>();
+    List<Sira> siraListesi2 = new ArrayList<>();
     
     ScheduledExecutorService executor =  Executors.newSingleThreadScheduledExecutor();
 
@@ -61,9 +67,11 @@ public class Main extends javax.swing.JFrame {
         initComponents();
         device.setFullScreenWindow(this);
         this.setExtendedState(JFrame.MAXIMIZED_BOTH);
-        
+
         seriIletisimProtokoluOlustur();
         executor.scheduleAtFixedRate(periodicTask, 1, 1, TimeUnit.SECONDS);
+      
+       this.requestFocus();
     }
 
     /**
@@ -90,11 +98,17 @@ public class Main extends javax.swing.JFrame {
         sira5 = new javax.swing.JTextField();
         sira5No = new javax.swing.JTextField();
         sonSiraBlinkText = new javax.swing.JLabel();
-        sonSiraKabinBlinkText = new javax.swing.JLabel();
+        saat = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setPreferredSize(new java.awt.Dimension(750, 600));
+        addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                formKeyPressed(evt);
+            }
+        });
 
         jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/avk/resimler/logo.png"))); // NOI18N
         jLabel2.setMaximumSize(new java.awt.Dimension(100, 100));
@@ -160,17 +174,30 @@ public class Main extends javax.swing.JFrame {
         sira5.setFont(new java.awt.Font("Tahoma", 0, 43)); // NOI18N
         sira5.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         sira5.setText("  5  ");
+        sira5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                sira5ActionPerformed(evt);
+            }
+        });
 
         sira5No.setEditable(false);
         sira5No.setFont(new java.awt.Font("Tahoma", 0, 43)); // NOI18N
         sira5No.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         sira5No.setText("100");
 
-        sonSiraBlinkText.setFont(new java.awt.Font("Tahoma", 1, 63)); // NOI18N
+        sonSiraBlinkText.setFont(new java.awt.Font("Tw Cen MT Condensed Extra Bold", 1, 199)); // NOI18N
         sonSiraBlinkText.setText("100");
 
-        sonSiraKabinBlinkText.setFont(new java.awt.Font("Tahoma", 1, 41)); // NOI18N
-        sonSiraKabinBlinkText.setText("Kabin 1");
+        saat.setFont(new java.awt.Font("sansserif", 1, 36)); // NOI18N
+        saat.setForeground(new java.awt.Color(102, 102, 255));
+        saat.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        saat.setText("13:14");
+
+        jLabel1.setFont(new java.awt.Font("sansserif", 1, 15)); // NOI18N
+        jLabel1.setForeground(new java.awt.Color(0, 51, 204));
+        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel1.setText("ZENİTTEK AR-GE LTD. ŞTİ");
+        jLabel1.setToolTipText("");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -197,68 +224,83 @@ public class Main extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(sira3No))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jTextField3, javax.swing.GroupLayout.DEFAULT_SIZE, 452, Short.MAX_VALUE)
+                        .addComponent(jTextField3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextField4, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE))
+                        .addComponent(jTextField4))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(sira5)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(sira5No))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 586, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(sonSiraBlinkText)
-                                .addGap(90, 90, 90))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(sonSiraKabinBlinkText)
-                                .addGap(77, 77, 77)))))
+                            .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 586, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(40, 40, 40)
+                                .addComponent(saat, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 168, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(sonSiraBlinkText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(75, 75, 75)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(15, 15, 15)
-                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(40, 40, 40)
-                        .addComponent(sonSiraBlinkText)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(sonSiraKabinBlinkText)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(15, 15, 15)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 205, Short.MAX_VALUE)
+                    .addComponent(sonSiraBlinkText, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 12, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(saat, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 12, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(sira1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sira1No, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(sira1)
+                    .addComponent(sira1No))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, 50, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(sira2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sira2No, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(sira2)
+                    .addComponent(sira2No))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, 36, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(sira3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sira3No, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
+                    .addComponent(sira3)
+                    .addComponent(sira3No))
+                .addGap(18, 52, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(sira4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sira4No, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(sira4)
+                    .addComponent(sira4No))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, 49, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(sira5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sira5No, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(sira5)
+                    .addComponent(sira5No))
+                .addGap(10, 10, 10))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void formKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_formKeyPressed
+        // TODO add your handling code here:
+        System.out.println(evt.getKeyCode());
+        AWTKeyStroke ak = AWTKeyStroke.getAWTKeyStrokeForEvent(evt);
+        if(ak.equals(AWTKeyStroke.getAWTKeyStroke(KeyEvent.VK_F4,evt.ALT_MASK)))
+        {
+          System.exit(0);
+        }
+     
+    }//GEN-LAST:event_formKeyPressed
+
+    private void sira5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sira5ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_sira5ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -296,10 +338,12 @@ public class Main extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JTextField jTextField3;
     private javax.swing.JTextField jTextField4;
+    private javax.swing.JLabel saat;
     private javax.swing.JTextField sira1;
     private javax.swing.JTextField sira1No;
     private javax.swing.JTextField sira2;
@@ -311,11 +355,11 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JTextField sira5;
     private javax.swing.JTextField sira5No;
     private javax.swing.JLabel sonSiraBlinkText;
-    private javax.swing.JLabel sonSiraKabinBlinkText;
     // End of variables declaration//GEN-END:variables
 
     
     private void seriIletisimProtokoluOlustur() {
+        console.println("seri iletişi protokolü çalıştı");
          // create and register the serial data listener
         serial.addListener((SerialDataEventListener) (SerialDataEvent event) -> {
             // NOTE! - It is extremely important to read the data received from the
@@ -324,28 +368,32 @@ public class Main extends javax.swing.JFrame {
             
             // print out the data received to the console
             try {
-                String gelenBilgi = event.getAsciiString();
+                //String gelenBilgi = event.getAsciiString();
+                byte[] receivedBytes = event.getBytes();
                 
-                console.println("[HEX DATA]   " + event.getHexByteString());
-                console.println("[ASCII DATA] " + gelenBilgi);
-                
+                int[] sonBilgi = gelenBilgiKontrol(receivedBytes);
+                //console.println("[HEX DATA]   " + event.getHexByteString());
+                //console.println("[ASCII DATA] " + gelenBilgi);
+                //System.out.println("gelen data : "+receivedBytes[0]+"  "+receivedBytes[1]+"  " +receivedBytes[2]);
+             //   System.out.println(String.format("gelen bilgi : %d %s %s %s %s ",receivedBytes.length, receivedBytes[0],receivedBytes[1],receivedBytes[2],receivedBytes[3]));
+                 System.out.println(String.format("gelen bilgi : %d %d %d %d %d ",sonBilgi.length, sonBilgi[0],sonBilgi[1],sonBilgi[2],sonBilgi[3]));
+                if(crcKontrolYap(sonBilgi)){
+                     gelenBilgiyiAnalizEt(sonBilgi);
+                }
+               
+                /*
                 if(gelenBilgi != null){
                     boolean parityKontrol = parityKontrolYap(gelenBilgi);
                     
                     if(parityKontrol){
                         
-                        siraListesi.add(0, gelenBilgi);
                         
-                        // now submit our jobs
-                        service.submit(() -> {
-                            ekraniGuncelle();
-                        });
                     }
                 }
+                */
                 
-                
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                System.out.println("hata : "+e.getMessage());
             }
         });
         
@@ -362,7 +410,7 @@ public class Main extends javax.swing.JFrame {
             //       except the 3B, it will return "/dev/ttyAMA0".  For Raspberry Pi
             //       model 3B may return "/dev/ttyS0" or "/dev/ttyAMA0" depending on
             //       environment configuration.
-            config.device(SerialPort.getDefaultPort())
+            config.device("/dev/ttyS0")
                .baud(Baud._1200)
                .dataBits(DataBits._8)
                .parity(Parity.NONE)
@@ -372,78 +420,264 @@ public class Main extends javax.swing.JFrame {
             // open the default serial device/port with the configuration settings
             serial.open(config);
         }catch(Exception e){
-                
+          console.println("hata : " + e.getMessage());        
         }
     }
     
+   
     
     
      private void ekraniGuncelle() {
          //son gelen sıra numarasını ekranda göster
-         sonSiraBlinkText.setText(siraListesi.get(0));
+         sonSiraBlinkText.setText(siraListesi2.get(0).getSiraNo());
+         playSound2();
+    
+         
          
          try{
-             sira1No.setText(siraListesi.get(0));
+             sira1No.setText(siraListesi2.get(0).getSiraNo());
+             sira1.setText(siraListesi2.get(0).getKabinNo());
          }catch(Exception e){
              System.out.println(e.getMessage());
          }
          
          try{
-            sira2No.setText(siraListesi.get(1));
+            sira2No.setText(siraListesi2.get(1).getSiraNo());
+            sira2.setText(siraListesi2.get(1).getKabinNo());
          }catch(Exception e){
              System.out.println(e.getMessage());
          }
          
          try{
-            sira3No.setText(siraListesi.get(2));
+            sira3No.setText(siraListesi2.get(2).getSiraNo());
+            sira3.setText(siraListesi2.get(2).getKabinNo());
          }catch(Exception e){
              System.out.println(e.getMessage());
          }
          
         
          try{
-            sira4No.setText(siraListesi.get(3));
+            sira4No.setText(siraListesi2.get(3).getSiraNo());
+            sira4.setText(siraListesi2.get(3).getKabinNo());
          }catch(Exception e){
              System.out.println(e.getMessage());
          }
          
          try{
-            sira5No.setText(siraListesi.get(4));
+            sira5No.setText(siraListesi2.get(4).getSiraNo());
+            sira5.setText(siraListesi2.get(4).getKabinNo());
          }catch(Exception e){
              System.out.println(e.getMessage());
          }
             
         
-         if(siraListesi.size()>50)
-            for(int i=5;i<siraListesi.size();i++){
-                siraListesi.remove(i);
-            }
-                     
+         if(siraListesi2.size()>50)
+            for(int i=5;i<siraListesi2.size();i++){
+                siraListesi2.remove(i);
+            }        
      }
+     
+     
+     
+     
 
-    private boolean parityKontrolYap(String gelenBilgi) {
-        return true;
-    }
-
+ 
+    
+    
+    
     int a = 0;
+    int loopCounter = 0;
     private void sonSiraNumarasiBlink() {
-       
+ 
+        loopCounter++;
+
         if(++a%2 == 0){
-             sonSiraBlinkText.setForeground(Color.RED);
-             sonSiraKabinBlinkText.setForeground(Color.RED);
+            if(loopCounter<12) jTextFieldBlink(true); else jTextFieldBlink(false);
+            sonSiraBlinkText.setForeground(Color.RED);
         }else{
-             sonSiraBlinkText.setForeground(Color.BLACK);
-             sonSiraKabinBlinkText.setForeground(Color.BLACK);
-        }
-       
+            sonSiraBlinkText.setForeground(Color.BLACK);
+            if(loopCounter<12) jTextFieldBlink(false); else jTextFieldBlink(false);
+        }   
     }
+    
+    
+    private void jTextFieldBlink(boolean durum){
+        if(durum){
+            sira1.setForeground(Color.WHITE);
+             sira1No.setForeground(Color.WHITE);
+             sira1.setBackground(Color.RED);
+             sira1No.setBackground(Color.RED);
+        }else{
+             sira1.setForeground(Color.BLACK);
+             sira1.setBackground(Color.WHITE);
+             sira1No.setBackground(Color.WHITE);
+             sira1No.setForeground(Color.BLACK);
+        }
+    }
+    
+    
 
    Runnable periodicTask = new Runnable() {
     public void run() {
-        // Invoke method(s) to do the work
         sonSiraNumarasiBlink();
     }
 };
+   
+   
+   
+   AudioInputStream audioIn;
+    Clip clip;
+  private void sesAyarlari(){
+      
+      try{
+           audioIn = AudioSystem.getAudioInputStream(new File("/home/pi/Music/uyari.wav"));
+         
+            clip = AudioSystem.getClip();
+             clip.addLineListener(event -> {
+               if(LineEvent.Type.STOP.equals(event.getType())) {
+                   clip.close();
+                   System.out.println("close");
+               }
+           });
+           
+      }catch(Exception ee){
+          System.out.println(" hata : "+ee.getMessage());
+      }
+           
+  }
+   
+ 
+  
+  
+  private void playSound2(){
+      loopCounter = 0;
+       try
+        {
+            AudioInputStream in = AudioSystem.getAudioInputStream(new File("/home/pi/Music/uyari.wav"));
+            Line.Info linfo = new Line.Info(Clip.class);
+            Line line = AudioSystem.getLine(linfo);
+            Clip clip = (Clip) line;
+           clip.addLineListener(event -> {
+               if(LineEvent.Type.STOP.equals(event.getType())) {
+                   clip.close();
+                   System.out.println("close");
+               }
+           });
+           
+            //Clip clip = AudioSystem.getClip();
+            clip.open(in);
+            clip.start();
+            long startTime = System.currentTimeMillis();
 
+            int repeatDuration = 10;
+            boolean playOnce = false;
+
+            do
+            {
+                //Checks every 50 ms whether clip has completed or not. Only continues after completion
+                Thread.sleep(50);
+            }
+            //Repeat while running and while clip time has not exceeded repeat duration
+            while (clip.isRunning() && (System.currentTimeMillis() - startTime < repeatDuration * 1000 || playOnce));
+
+            clip.stop();   //Stop if still running past max time
+        } catch (Exception e) {
+            e.printStackTrace();
+        } 
+    
+  }
+
+    private boolean crcKontrolYap(int[] receivedBytes) {
+ 
+       boolean durum = false;
+       try{
+           /*
+            int crc = Integer.parseInt( ""+receivedBytes[3] );
+            int hi =  Integer.parseInt( ""+receivedBytes[2] );
+            int lo =  Integer.parseInt( ""+receivedBytes[1]);
+            int id =  Integer.parseInt( ""+receivedBytes[0] );  
+          */
+             int crc = receivedBytes[3] ;
+            int hi =  receivedBytes[2] ;
+            int lo =  receivedBytes[1];
+            int id =  receivedBytes[0] ;  
+            if (id+lo+hi == crc)
+                durum = true;
+       }catch(Exception e){
+           System.out.println("hata : "+e.getMessage());
+           
+       }
+       
+       return true;
+    }
+
+    private void gelenBilgiyiAnalizEt(int[] receivedBytes) {
+        try{
+            int hi = receivedBytes[2] ;
+            int lo = receivedBytes[1];
+            int id =  receivedBytes[0] ;  
+            
+            switch(id){
+                case 20:
+                    saatDegistir(lo,hi);
+                    break;
+                case 50:
+                    siraNumarasiGuncelle(lo,hi,1);
+                    break;
+                case 51:
+                    siraNumarasiGuncelle(lo,hi,2);
+                    break;
+                case 52:
+                    siraNumarasiGuncelle(lo,hi,3);
+                    break;
+                case 53:
+                    siraNumarasiGuncelle(lo,hi,4);
+                    break;    
+                 
+            }
+                
+       }catch(Exception e){
+           System.out.println("hata : "+e.getMessage());
+           
+       }
+    }
+
+    private void saatDegistir(int s, int d) {
+        String d_ = (d < 10 ? "0" : "") + d;
+        String s_ = (s < 10 ? "0" : "") + s;
+        saat.setText(String.format("%s:%s",s_,d_));
+    }
+
+    private void siraNumarasiGuncelle(int lo, int hi,int kabinNo) {
+        
+        int bilgi = hi * 256 + lo;
+        
+        Sira sira = new Sira(bilgi+"", kabinNo+"");
+        
+        siraListesi2.add(0, sira);
+                        
+        // now submit our jobs
+        service.submit(() -> {
+            ekraniGuncelle();
+        });
+    }
+
+private int[] gelenBilgiKontrol(byte[] receivedBytes) {
+        int[] son= new int[5];
+        for (int i=0;i<receivedBytes.length;i++) {
+            if( receivedBytes[i]>=0){
+               son[i] = receivedBytes[i]; 
+                System.out.println("büyük");
+            }
+            else{
+                System.out.println("küçük");
+                  son[i] =  (receivedBytes[i]+256);
+            }
+               
+        }
+        
+        return son;
+         
+    }
     
 }
