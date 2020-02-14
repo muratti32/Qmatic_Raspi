@@ -1,1 +1,3 @@
-Bucak Devlet hastenesi için yapılan java sıramatik uygulaması. Proje Rasperry pi üzerinde çalışmaktadır. Seri haberleşme portundan gelen bilgiye göre sıra dağıtmaktadır.
+Bucak Devlet hastenesi için yapılan sıramatik uygulaması. Proje Rasperry pi üzerinde çalışmaktadır. Seri haberleşme portundan gelen bilgiye göre sıra dağıtmaktadır.
+
+![Screenshot](screenshot/qmatic.png "Title")

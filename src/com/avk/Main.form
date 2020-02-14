@@ -95,9 +95,9 @@
                   <Component id="sonSiraBlinkText" pref="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace pref="12" max="32767" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
+              <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="saat" alignment="0" max="32767" attributes="0"/>
-                  <Component id="jLabel1" alignment="3" pref="0" max="32767" attributes="0"/>
+                  <Component id="jLabel1" min="-2" pref="0" max="-2" attributes="0"/>
               </Group>
               <EmptySpace pref="12" max="32767" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
